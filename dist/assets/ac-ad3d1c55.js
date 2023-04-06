@@ -1,0 +1,1 @@
+import{A as u}from"./index-93209f80.js";const l="http://localhost:8848/";function o(t){var r=l+"ac/cf";return t!=null&&(r=r+"?grade="+t),u({method:"GET",url:r})}function a(t){var r=l+"ac/luogu";return t!=null&&(r=r+"?grade="+t),u({method:"GET",url:r})}function n(t){var r=l+"ac/vj";return t!=null&&(r=r+"?grade="+t),u({method:"GET",url:r})}export{n as a,a as b,o as g};

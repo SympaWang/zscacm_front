@@ -1,5 +1,16 @@
-<script setup>
+<script>
+// 引入
+import Prism from "prismjs"; // 引入插件
+import 'prismjs/themes/prism.css'; // 引入样式
+
+export default {
+  mounted() {
+    // 使用this.$store.state.XXX可以直接访问到仓库中的状态
+    //console.log(this.$store.state.name);
+  },
+};
 </script>
+
 
 <template>
   <!-- 路由出口 -->
@@ -27,4 +38,6 @@ html,body,#app{
   width: 100%;
   max-width: 100%;
 }
+
+
 </style>

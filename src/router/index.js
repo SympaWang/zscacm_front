@@ -10,7 +10,55 @@ const routes = [
         path:'/dashboard/index',component:()=>import('../pages/dashboard/index.vue')
     },
     {
-        path:'/index',component:()=>import('../pages/index.vue')
+        path:'/',component:()=>import('../pages/index.vue'), children: [
+            {
+                path: '/', component:()=>import('../components/index.vue')
+            },
+            {
+                path: '/problems', name: 'problems', component:()=>import('../components/problems.vue'),
+                meta: {
+                    keepAlive: true // 需要缓存页面
+                  }
+            },
+            {
+                path: '/login', component:()=>import('../components/login.vue')
+            },
+
+            {
+                path: '/ac/cf', component:()=>import('../components/solve/cf.vue')
+            },
+            {
+                path: '/ac/vj', component:()=>import('../components/solve/vj.vue')
+            },
+            {
+                path: '/ac/luogu', component:()=>import('../components/solve/luogu.vue')
+            },
+            {
+                path: '/rating/user', component:()=>import('../components/rating/userRating.vue')
+            },
+            {
+                path: '/rating/contest', component:()=>import('../components/rating/contestRating.vue')
+            },
+            {
+                path: '/discuss', component:()=>import('../components/discuss.vue')
+            },
+            {
+                path: '/discuss/detail', name: 'discussDetail', component:()=>import('../components/discuss/detail.vue')
+            },
+            {
+                path: '/clockIn', component:()=>import('../components/clockIn.vue')
+            },
+            {
+                path: '/center/message', component:()=>import('../components/center/message.vue')
+            },
+            {
+                path: '/center/center', component:()=>import('../components/center/center.vue')
+            },
+            {
+                path: '/manage/user', component:()=>import('../components/manage/user.vue')
+            },
+
+        ]
     },
 ]
 
