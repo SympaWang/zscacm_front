@@ -12,4 +12,4 @@ export function getAttendance(date, grade) {
         method: 'GET',
         url: thisUrl
     })
-}
+} 
