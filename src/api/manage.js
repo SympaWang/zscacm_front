@@ -20,3 +20,12 @@ export function updateUserDetail(user) {
         url: thisUrl
     })
 }
+
+export function addUser(user) {
+    var thisUrl = baseUrl + 'addUser';
+    return API({
+        method: 'POST',
+        data: user,
+        url: thisUrl
+    })
+}

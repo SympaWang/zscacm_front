@@ -1,5 +1,5 @@
 // 1.引入创建路由需要的组件
-import { createRouter, createWebHistory} from 'vue-router'
+import { createRouter, createWebHashHistory} from 'vue-router'
 
 // 2.配置系统所有路由页面
 const routes = [
@@ -55,16 +55,18 @@ const routes = [
                 path: '/center/center', component:()=>import('../components/center/center.vue')
             },
             {
+                path: '/center/changePassword', component:()=>import('../components/center/changePassword.vue')
+            },
+            {
                 path: '/manage/user', component:()=>import('../components/manage/user.vue')
             },
-
         ]
     },
 ]
 
 // 3.创建路由实例
 const router = createRouter({
-    history: createWebHistory(), //使用history模式，hash模式使用 createWebHashHistory() 方法
+    history: createWebHashHistory(), //使用history模式，hash模式使用 createWebHashHistory() 方法
     routes
   })
 

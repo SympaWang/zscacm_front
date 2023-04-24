@@ -49,15 +49,15 @@
         width="30%"
         :before-close="handleClose"
     >
-        <el-form  v-for="addForm in addForm" :key="addForm" :model="addForm" label-width="120px">
+        <el-form  v-for="user in addForm" :key="addForm" :model="addForm" label-width="120px">
             <el-form-item label="姓名">
-                <el-input v-model="addform.username" />
+                <el-input v-model="user.username" />
             </el-form-item>
             <el-form-item label="姓名拼音">
-                <el-input v-model="addform.pyName" />
+                <el-input v-model="user.pyName" />
             </el-form-item>
             <el-form-item label="年级">
-                <el-select v-model="addform.grade" class="m-2" placeholder="Select" size="large">
+                <el-select v-model="user.grade" class="m-2" placeholder="Select" size="large">
                     <el-option
                     v-for="item in options"
                     :key="item.value"
@@ -67,7 +67,7 @@
                 </el-select>
             </el-form-item>
             <el-form-item label="学号">
-                <el-input v-model="form.studentNum" />
+                <el-input v-model="user.studentNum" />
             </el-form-item>
             <el-divider></el-divider>
         </el-form>
@@ -77,7 +77,7 @@
             <el-button @click="reduce" :disabled="flag">-</el-button>
             <el-button @click="resetForm()">重置</el-button>
             <el-button @click="addVisible = false">取消</el-button>
-            <el-button type="primary" @click="updateUser()">
+            <el-button type="primary" @click="addUserList()">
             确定
             </el-button>
         </span>
@@ -150,7 +150,7 @@
 
 <script>
 
-import { getUserDetailList, updateUserDetail } from '../../api/manage';
+import { getUserDetailList, updateUserDetail, addUser } from '../../api/manage';
 import { reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 
@@ -169,6 +169,7 @@ export default {
           username: '',
           pyName: '',
           grade: '',
+          studentNum: '',
         }
       ],
       options:[
@@ -250,7 +251,7 @@ export default {
         this.addVisible = true
     },
     add() {
-      var user = { username: '', pyName: '', grade: '' }
+      var user = { username: '', pyName: '', grade: '', studentNum: '' }
       this.addForm.push(user)
       this.flags()
     },
@@ -271,10 +272,21 @@ export default {
       this.addForm = [{}]
     },
 
+    addUserList() {
+        
+        addUser(this.addForm).then((res) => {
+            console.log(res)
+        })
+        .catch((err) => {
+        ElMessage.error('请求超时，请重试！');
+        console.log(err)
+        })
+
+    },
+
     updateUser() {
         this.dialogVisible = false;
 
-        console.log(this.form)
         if(this.form.userType == "超级管理员") this.form.userType = 0;
         if(this.form.userType == '管理员') this.form.userType = 1;
         if(this.form.userType == '队员') this.form.userType = 2;

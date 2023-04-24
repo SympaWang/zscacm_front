@@ -37,6 +37,10 @@
     </el-select>
     <el-button type="primary" @click="getUser">查询</el-button>
 
+    <div style="padding: 10px 0;">
+      <myChart></myChart>
+    </div>
+
     </div>
         <el-table :data="users" style="width: 100%" @sort-change="sortChange">
             <el-table-column label="队员信息" >
@@ -70,11 +74,12 @@ import { getFutureContests, getUsers } from "../api/index";
 import { reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { changeColorByRating } from "../api/changeColor";
+import myChart from './showData/myChart.vue';
 
 export default {
   data: function() {
     return{
-      iconUrl: '/static/zscacm.png',
+      iconUrl: './static/zscacm.png',
       contests: null,
       users: null,
       loading: 0,
@@ -102,6 +107,10 @@ export default {
         },
         ],
     }
+  },
+
+  components: {
+    myChart
   },
 
   methods: {

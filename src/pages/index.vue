@@ -39,7 +39,7 @@
           <el-sub-menu index="/user" v-if="this.$store.state.login==1">
             <template #title>Hi, {{this.$store.state.username}}</template>
             <el-menu-item index="/center/center">个人中心</el-menu-item>
-            <el-menu-item index="/ap">修改密码</el-menu-item>
+            <el-menu-item index="/center/changePassword">修改密码</el-menu-item>
             <el-menu-item index="/center/message">我的消息</el-menu-item>
             <el-menu-item index="/" @click="onLogout">退出登录</el-menu-item>
           </el-sub-menu>

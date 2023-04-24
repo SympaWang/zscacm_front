@@ -54,7 +54,7 @@
                     console.log(localStorage.getItem('userToken'));
                     this.$store.commit('setLogin', 1);
                     this.$store.commit('setUid', res.data.data.uid);
-                    this.$store.commit('setUsername', this.form.name);
+                    this.$store.commit('setUsername', res.data.data.username);
                     this.$store.commit('setUserType', res.data.data.userType);
                     console.log(res.data.data.userType);
                     window.location.replace("http://localhost:5173");
