@@ -16,7 +16,11 @@
             active-text-color="#ffd04b"
             router
           >
-            <el-menu-item index="/">首页</el-menu-item>
+            <el-sub-menu index="/dashboard">
+              <template #title>首页</template>
+              <el-menu-item index="/dashboard/index">首页</el-menu-item>
+              <el-menu-item index="/center/home">个人首页</el-menu-item>
+            </el-sub-menu>
             <el-menu-item index="/about">关于集训队</el-menu-item>
             <el-menu-item index="/problems">题目检索</el-menu-item>
             <el-menu-item index="/solve">做题统计</el-menu-item>
@@ -34,7 +38,6 @@
             <el-menu-item v-if="store.state.login == 0" index="/login">登录</el-menu-item>
             <el-sub-menu v-if="store.state.login == 1" index="/user">
               <template #title>Hi, {{ store.state.username }}</template>
-              <el-menu-item index="/center/home">个人首页</el-menu-item>
               <el-menu-item index="/center/center">个人中心</el-menu-item>
               <el-menu-item index="/center/changePassword">修改密码</el-menu-item>
               <el-menu-item index="/center/message">我的消息</el-menu-item>
