@@ -71,6 +71,7 @@
             <span class="history-time">{{ c.beginTime }}</span>
             <el-tag size="small" type="info" effect="plain" class="history-count">共 {{ c.participantCount || 0 }} 人参加</el-tag>
             <el-button size="small" type="primary" plain class="history-open" :disabled="!c.url" @click.stop="openContest(c.url)">打开比赛</el-button>
+            <el-button size="small" type="warning" plain class="history-open" @click.stop="goReview(c)">复盘</el-button>
           </template>
           <el-table :data="historyDetail[c.id] || []" size="small" v-loading="historyLoading[c.id]">
             <el-table-column prop="username" label="姓名" min-width="120" />
@@ -172,6 +173,11 @@ const currentContest = computed(() => {
 function openContest(url) {
   if (!url) return
   window.open(url, '_blank')
+}
+
+// 跳转复盘页:默认复盘当前登录用户
+function goReview(c) {
+  router.push('/rating/review?contestId=' + c.id)
 }
 
 onMounted(() => {

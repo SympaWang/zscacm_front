@@ -15,14 +15,20 @@
             text-color="#c0c4cc"
             active-text-color="#ffd04b"
             router
+            :ellipsis="false"
           >
             <el-sub-menu index="/dashboard">
               <template #title>首页</template>
               <el-menu-item index="/dashboard/index">首页</el-menu-item>
-              <el-menu-item index="/center/home">个人首页</el-menu-item>
+              <el-menu-item v-if="store.state.login == 1" index="/center/home">个人首页</el-menu-item>
+              <el-menu-item v-if="store.state.login == 1 && store.state.userType <= 1" index="/rating/user?viewHome=1">查看某队员首页</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/about">关于集训队</el-menu-item>
-            <el-menu-item index="/problems">题目检索</el-menu-item>
+            <el-sub-menu index="/problems">
+              <template #title>题目检索</template>
+              <el-menu-item index="/problems">CF 题目检索</el-menu-item>
+              <el-menu-item index="/problems/acwing">AcWing 题目检索</el-menu-item>
+            </el-sub-menu>
             <el-menu-item index="/solve">做题统计</el-menu-item>
             <el-sub-menu index="/rating">
               <template #title>队员比赛信息</template>
@@ -30,28 +36,31 @@
               <el-menu-item index="/rating/contest">查看某场比赛</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/discuss">讨论区</el-menu-item>
-            <el-sub-menu v-if="store.state.userType <= 1" index="/manage">
+            <el-menu-item index="/rankland">大赛榜单</el-menu-item>
+            <el-sub-menu v-if="store.state.login == 1 && store.state.userType <= 1" index="/manage" class="nav-right">
               <template #title>系统管理</template>
               <el-menu-item index="/manage/user">系统用户管理</el-menu-item>
               <el-menu-item index="/manage/discuss">帖子管理</el-menu-item>
             </el-sub-menu>
-            <el-menu-item v-if="store.state.login == 0" index="/login">登录</el-menu-item>
-            <el-sub-menu v-if="store.state.login == 1" index="/user">
+            <el-menu-item v-if="store.state.login == 0" index="/login" class="nav-right">登录</el-menu-item>
+            <el-sub-menu v-if="store.state.login == 1" index="/user" class="nav-right">
               <template #title>Hi, {{ store.state.username }}</template>
               <el-menu-item index="/center/center">个人中心</el-menu-item>
               <el-menu-item index="/center/changePassword">修改密码</el-menu-item>
               <el-menu-item index="/center/message">我的消息</el-menu-item>
               <el-menu-item index="/" @click="onLogout">退出登录</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="/feedback">意见反馈</el-menu-item>
+            <el-menu-item v-if="store.state.login == 1" index="/feedback" class="nav-right">意见反馈</el-menu-item>
           </el-menu>
         </div>
       </el-header>
 
       <el-main class="app-main">
-        <keep-alive :include="['problems']">
-          <router-view />
-        </keep-alive>
+        <router-view v-slot="{ Component }">
+          <keep-alive :include="['problems']">
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </el-main>
 
       <el-footer class="app-footer" height="60px">
@@ -72,9 +81,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
+import { ElNotification } from 'element-plus'
 import api from './api'
 
 const store = useStore()
@@ -83,13 +93,38 @@ const router = useRouter()
 
 const activeIndex2 = computed(() => route.path)
 
+// 洛谷做题记录未公开提示(悬浮,登录/刷新后检测)
+function showLgPrivacyTip() {
+  ElNotification({
+    title: '洛谷做题记录未公开',
+    message: '检测到你的洛谷做题记录未公开,平台无法统计你的洛谷做题数据。' +
+      '请在洛谷「个人设置 → 账号安全与隐私」中开启"公开我的做题记录",调整后重新登录即可正常统计。',
+    type: 'warning',
+    duration: 0,
+    position: 'top-right',
+    offset: 80
+  })
+}
+
+onMounted(() => {
+  // 已登录且洛谷隐私未公开时提示
+  if (store.state.login == 1 && store.state.lgPrivacy === 1) {
+    showLgPrivacyTip()
+  }
+})
+
 function onLogout() {
   api.logout().then(() => {
     localStorage.removeItem('userToken')
+    localStorage.removeItem('userUid')
+    localStorage.removeItem('userName')
+    localStorage.removeItem('userType')
+    localStorage.removeItem('userLgPrivacy')
     store.commit('setLogin', 0)
     store.commit('setUsername', '')
     store.commit('setUserType', 2)
-    router.push('/')
+    store.commit('setLgPrivacy', 0)
+    router.push('/dashboard/index')
   }).catch(a => {
     console.log(a)
   })
@@ -125,6 +160,9 @@ function onLogout() {
   flex: 1;
   background: transparent;
 }
+/* 右侧菜单项(系统管理/登录/用户/意见反馈)靠右对齐,仅第一个吸收剩余空间 */
+.app-header :deep(.el-menu .nav-right) { margin-left: auto; }
+.app-header :deep(.el-menu .nav-right ~ .nav-right) { margin-left: 0; }
 .app-header :deep(.el-menu-item),
 .app-header :deep(.el-sub-menu__title) {
   color: #c0c4cc;

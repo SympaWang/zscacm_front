@@ -21,7 +21,7 @@
         </el-form-item>
         <el-button type="primary" size="large" class="auth-submit" @click="onSubmit" :loading="loading">确 定</el-button>
         <div class="auth-footer">
-          <el-link type="primary" :underline="false" @click="$router.push('/login')">返回登录</el-link>
+          <el-link type="primary" :underline="'never'" @click="$router.push('/login')">返回登录</el-link>
         </div>
       </el-form>
     </div>

@@ -12,7 +12,7 @@
         <el-table-column label="帖子信息">
           <el-table-column prop="title" label="帖子标题" min-width="260">
             <template #default="scope">
-              <el-link type="primary" :underline="false" @click="openDetail(scope.row)" class="post-title">{{ scope.row.title }}</el-link>
+              <el-link type="primary" :underline="'never'" @click="openDetail(scope.row)" class="post-title">{{ scope.row.title }}</el-link>
             </template>
           </el-table-column>
           <el-table-column prop="username" label="发贴用户" width="140" align="center" />

@@ -75,6 +75,78 @@
       </div>
     </div>
 
+    <!-- 近7天通过/未通过题目 -->
+    <div class="page-card">
+      <div class="recent-header">
+        <h2 class="page-title">近 7 天做题情况</h2>
+        <el-button size="small" type="primary" plain @click="goSubmitHistory">提交历史查询</el-button>
+      </div>
+      <div class="recent-block">
+        <div class="recent-title">
+          <el-tag size="small" type="success" effect="dark">通过 {{ recentPassed.length }} 题</el-tag>
+          <span class="recent-tip">点击题目可查看提交历史</span>
+        </div>
+        <div v-if="recentLoading" class="recent-loading">加载中...</div>
+        <div v-else-if="recentPassed.length" class="recent-list">
+          <div v-for="p in recentPassed.slice(0, recentPassedExpand ? recentPassed.length : 5)" :key="p.key" class="recent-item pass" @click="openHistory(p)">
+            <span class="recent-platform">{{ p.platform }}</span>
+            <span class="recent-name">{{ p.name || p.key }}</span>
+            <span class="recent-time">{{ formatTime(p.lastTime) }}</span>
+          </div>
+          <div v-if="recentPassed.length > 5" class="recent-more" @click="recentPassedExpand = !recentPassedExpand">
+            {{ recentPassedExpand ? '收起' : '展开更多 (' + recentPassed.length + ')' }}
+          </div>
+        </div>
+        <el-empty v-else-if="!recentLoading" description="近 7 天暂无通过记录" :image-size="50" />
+
+        <div class="recent-title" style="margin-top: 18px;">
+          <el-tag size="small" type="danger" effect="dark">未通过 {{ recentFailed.length }} 题</el-tag>
+          <span class="recent-tip">近 7 天提交过但未通过的题目</span>
+        </div>
+        <div v-if="recentFailed.length" class="recent-list">
+          <div v-for="p in recentFailed.slice(0, recentFailedExpand ? recentFailed.length : 5)" :key="p.key" class="recent-item fail" @click="openHistory(p)">
+            <span class="recent-platform">{{ p.platform }}</span>
+            <span class="recent-name">{{ p.name || p.key }}</span>
+            <span class="recent-time">{{ formatTime(p.lastTime) }}</span>
+          </div>
+          <div v-if="recentFailed.length > 5" class="recent-more" @click="recentFailedExpand = !recentFailedExpand">
+            {{ recentFailedExpand ? '收起' : '展开更多 (' + recentFailed.length + ')' }}
+          </div>
+        </div>
+        <el-empty v-else-if="!recentLoading" description="近 7 天无不通过记录" :image-size="50" />
+      </div>
+    </div>
+
+    <!-- 提交历史弹窗 -->
+    <el-dialog v-model="historyVisible" :title="historyTitle" width="720px" align-center>
+      <el-table :data="historyList" size="small" max-height="420" stripe>
+        <el-table-column prop="time" label="提交时间" width="170" />
+        <el-table-column label="状态" width="140" align="center">
+          <template #default="s">
+            <el-tag :type="s.row.ok ? 'success' : 'danger'" size="small">
+              {{ s.row.ok ? '通过' : (s.row.status || '未通过') }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="language" label="语言" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="runtime" label="耗时(ms)" width="100" align="center">
+          <template #default="s">
+            <span v-if="s.row.runtime != null">{{ s.row.runtime }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="题目" min-width="160" show-overflow-tooltip>
+          <template #default="s">
+            <el-link v-if="s.row.url" type="primary" :href="s.row.url" target="_blank">{{ s.row.problemName }}</el-link>
+            <span v-else>{{ s.row.problemName }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button type="primary" @click="historyVisible = false">关 闭</el-button>
+      </template>
+    </el-dialog>
+
     <!-- CF Rating 变化曲线 -->
     <div class="page-card">
       <h2 class="page-title">CF Rating 变化曲线</h2>
@@ -112,14 +184,21 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '../api'
 
 const store = useStore()
+const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const data = ref({ user: {}, solves: {}, contests: {}, rating: { trend: [] }, compare: {} })
+
+// 查看的目标用户:URL ?uid= 优先(管理员查看他人),否则当前登录用户
+const viewUid = computed(() => {
+  const q = Number(route.query.uid)
+  return q > 0 ? q : store.state.uid
+})
 
 const user = computed(() => data.value.user || {})
 const solves = computed(() => data.value.solves || {})
@@ -139,9 +218,63 @@ let compareChart = null
 const trendChartRef = ref(null)
 const compareChartRef = ref(null)
 
+// 近 7 天通过/未通过题目
+const recentPassed = ref([])
+const recentFailed = ref([])
+const recentLoading = ref(false)
+const recentPassedExpand = ref(false)
+const recentFailedExpand = ref(false)
+const historyVisible = ref(false)
+const historyTitle = ref('')
+const historyList = ref([])
+
+// 跳转到提交历史查询页
+function goSubmitHistory() {
+  router.push('/center/history')
+}
+
+function loadRecent() {
+  recentLoading.value = true
+  api.getPersonalRecentProblems({ uid: viewUid.value }).then(e => {
+    const d = e.data.data || {}
+    recentPassed.value = d.passed || []
+    recentFailed.value = d.failed || []
+    recentLoading.value = false
+  }).catch(e => {
+    console.log(e)
+    recentLoading.value = false
+  })
+}
+
+// 点击题目查看提交历史
+function openHistory(p) {
+  historyTitle.value = (p.name || p.key) + ' — 提交历史'
+  historyList.value = []
+  historyVisible.value = true
+  const platform = String(p.platform || '').toLowerCase()
+  // 后端 platform 区分:CF 用 "CF", VJ 用 OJ 名(如 CodeForces)。统一转 key 前缀判断
+  const isCf = p.key && p.key.startsWith('cf:')
+  const apiPlatform = isCf ? 'cf' : 'vj'
+  api.getPersonalSubmitHistory({ uid: viewUid.value, platform: apiPlatform, key: p.key }).then(res => {
+    const d = res.data && res.data.data
+    historyList.value = Array.isArray(d) ? d : []
+  }).catch(e => {
+    console.log(e)
+    historyList.value = []
+  })
+}
+
+// 时间戳(ms)格式化
+function formatTime(ms) {
+  if (!ms) return '-'
+  const d = new Date(ms)
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
 function loadData() {
   loading.value = true
-  api.getPersonalHome({ uid: store.state.uid }).then(e => {    data.value = e.data.data || {}
+  api.getPersonalHome({ uid: viewUid.value }).then(e => {    data.value = e.data.data || {}
     loading.value = false
     nextTick(() => {
       renderTrend()
@@ -188,7 +321,7 @@ function renderCompare() {
   if (!members.length || !compareChartRef.value) return
   if (compareChart) compareChart.dispose()
 
-  const myUid = store.state.uid
+  const myUid = viewUid.value
   const top = [...members].sort((a, b) => b.rating - a.rating).slice(0, 10)
   const names = top.map(m => m.name + (m.uid === myUid ? ' (我)' : ''))
   const colors = top.map(m => m.uid === myUid ? '#e6a23c' : '#5470c6')
@@ -225,7 +358,13 @@ function resize() {
 }
 
 onMounted(() => {
+  // 未登录访问个人首页时跳转登录页
+  if (store.state.login != 1) {
+    router.push('/login')
+    return
+  }
   loadData()
+  loadRecent()
   window.addEventListener('resize', resize)
 })
 
@@ -298,6 +437,49 @@ onBeforeUnmount(() => {
 .platform-item.total { font-weight: 600; color: var(--text-primary); }
 
 .trend-chart { width: 100%; height: 360px; }
+
+.recent-title { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.recent-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.recent-tip { font-size: 12px; color: var(--text-muted); }
+.recent-loading { color: var(--text-muted); font-size: 13px; padding: 12px 0; }
+.recent-list { display: flex; flex-direction: column; gap: 8px; }
+.recent-more {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--primary, #409eff);
+  cursor: pointer;
+  padding: 6px 0;
+  border-radius: 6px;
+  background: #f7f9fc;
+  transition: background .2s;
+}
+.recent-more:hover { background: #ecf3fd; }
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #eef1f6;
+  cursor: pointer;
+  transition: all .2s;
+  font-size: 14px;
+}
+.recent-item:hover { border-color: var(--primary, #409eff); box-shadow: 0 2px 8px rgba(64,158,255,.15); }
+.recent-item.pass { background: #f0f9eb; }
+.recent-item.fail { background: #fef0f0; }
+.recent-platform {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 8px;
+  background: var(--primary, #409eff);
+}
+.recent-item.fail .recent-platform { background: #f56c6c; }
+.recent-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
+.recent-time { flex-shrink: 0; font-size: 12px; color: var(--text-muted); }
 
 .compare-top { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .compare-item {

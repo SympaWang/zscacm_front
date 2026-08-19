@@ -16,7 +16,7 @@
         <div class="auth-error" v-if="info">{{ info }}</div>
         <el-button type="primary" size="large" class="auth-submit" @click="onSubmit" :loading="loading">登 录</el-button>
         <div class="auth-footer">
-          <el-link type="primary" :underline="false" @click="forgetPassword">忘记密码?</el-link>
+          <el-link type="primary" :underline="'never'" @click="forgetPassword">忘记密码?</el-link>
         </div>
       </el-form>
     </div>
@@ -27,7 +27,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElNotification } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import api from '../api'
 
@@ -40,6 +40,19 @@ const loading = ref(false)
 
 function forgetPassword() {
   router.push('/forgetPassword')
+}
+
+// 洛谷做题记录未公开提示(悬浮提示,引导用户调整隐私设置)
+function showLgPrivacyTip() {
+  ElNotification({
+    title: '洛谷做题记录未公开',
+    message: '检测到你的洛谷做题记录未公开,平台无法统计你的洛谷做题数据。' +
+      '请在洛谷「个人设置 → 账号安全与隐私」中开启"公开我的做题记录",调整后重新登录即可正常统计。',
+    type: 'warning',
+    duration: 0,
+    position: 'top-right',
+    offset: 80
+  })
 }
 
 function onSubmit() {
@@ -55,11 +68,20 @@ function onSubmit() {
       info.value = '学号或密码错误!'
     } else {
       localStorage.setItem('userToken', data.data.token)
+      localStorage.setItem('userUid', data.data.uid)
+      localStorage.setItem('userName', data.data.username)
+      localStorage.setItem('userType', data.data.userType)
+      localStorage.setItem('userLgPrivacy', data.data.lgPrivacy !== undefined ? data.data.lgPrivacy : 0)
       store.commit('setLogin', 1)
       store.commit('setUid', data.data.uid)
       store.commit('setUsername', data.data.username)
       store.commit('setUserType', data.data.userType)
+      store.commit('setLgPrivacy', data.data.lgPrivacy !== undefined ? data.data.lgPrivacy : 0)
       ElMessage.success('登录成功')
+      // 洛谷做题记录未公开时提示用户调整隐私设置
+      if (data.data.lgPrivacy === 1) {
+        showLgPrivacyTip()
+      }
       // 普通队员登录后默认进入个人首页,其他账号进入平台首页
       if (data.data.userType === 2) {
         router.push('/center/home')

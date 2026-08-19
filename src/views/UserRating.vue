@@ -22,6 +22,7 @@
         </template>
       </el-select>
       <el-button type="primary" size="large" @click="onSubmit">查 询</el-button>
+      <el-button v-if="isAdminView" size="large" type="success" plain :disabled="!selectedUid" @click="viewPersonalHome">查看个人主页</el-button>
     </div>
 
     <my-chart ref="myChart" :grade="grade" body="body" class="rating-chart" />
@@ -68,15 +69,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '../api'
 import MyChart from '../components/MyChart.vue'
 import rankStyle from '../utils/rankStyle'
 
 const store = useStore()
+const route = useRoute()
 const router = useRouter()
 const contests = ref([])
 const grade = ref(null)
@@ -93,6 +95,21 @@ const loadingUsers = ref(false)
 const tableEmptyText = ref('暂无数据')
 const loading = ref(false)
 const loginVisible = ref(false)
+
+// 管理员视角(从"首页 → 查看某队员首页"进入):可查看任意队员个人主页
+const isAdminView = computed(() => store.state.login == 1 && store.state.userType <= 1 && route.query.viewHome == '1')
+
+// 当前选中队员的 uid
+const selectedUid = computed(() => {
+  const u = userList.value.find(i => i.username === selectedName.value)
+  return u ? u.id : null
+})
+
+// 查看选中队员的个人主页
+function viewPersonalHome() {
+  if (!selectedUid.value) return
+  router.push('/center/home?uid=' + selectedUid.value)
+}
 
 onMounted(() => {
   if (store.state.login != 1) loginVisible.value = true

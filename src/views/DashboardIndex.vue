@@ -43,6 +43,7 @@
             <span class="history-time">{{ c.beginTime }}</span>
             <el-tag size="small" type="info" effect="plain" class="history-count">共 {{ c.participantCount }} 人参加</el-tag>
             <el-button size="small" type="primary" plain class="history-open" :disabled="!c.url" @click.stop="openContest(c.url)">打开比赛</el-button>
+            <el-button size="small" type="warning" plain class="history-open" @click.stop="goReview(c)">复盘</el-button>
           </template>
           <el-table :data="historyDetail[c.id] || []" size="small" v-loading="historyLoading[c.id]">
             <el-table-column prop="username" label="姓名" min-width="120" />
@@ -175,6 +176,11 @@ function openContest(url) {
 // 查看更多:跳转到队员比赛信息-查看某场比赛页面
 function goAllHistory() {
   router.push('/rating/contest')
+}
+
+// 复盘:管理员进整体复盘页(可选成员),普通队员复盘自己
+function goReview(c) {
+  router.push('/rating/review?contestId=' + c.id)
 }
 
 // 展开某场比赛时加载参与详情(懒加载,已加载则跳过)

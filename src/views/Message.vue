@@ -12,7 +12,7 @@
             </div>
             <div class="msg-foot">
               <span class="msg-time">{{ item.createTime }}</span>
-              <el-link type="primary" :underline="false" @click="openDiscuss(item)">查看帖子</el-link>
+              <el-link type="primary" :underline="'never'" @click="openDiscuss(item)">查看帖子</el-link>
             </div>
           </div>
         </div>

@@ -33,6 +33,14 @@ export default {
   getContestUser(params) { return request.get('/rating/contest', { params }) },
   getUserRatings(params) { return request.get('/userRating', { params }) },
   getPersonalHome(params) { return request.get('/personalHome', { params }) },
+  getPersonalRecentProblems(params) { return request.get('/personalRecentProblems', { params }) },
+  getPersonalSubmitHistory(params) { return request.get('/personalSubmitHistory', { params }) },
+  getPersonalSubmitSearch(params) { return request.get('/personalSubmitSearch', { params }) },
+  getContestReview(params) { return request.get('/contestReview', { params }) },
+  getAcwingProblemList(params) { return request.get('/acwingProblemList', { params }) },
+  getRanklandContests(params) { return request.get('/rankland/contests', { params }) },
+  getRanklandCollections() { return request.get('/rankland/collections') },
+  getRanklandRank(params) { return request.get('/rankland/rank', { params }) },
 
   // ---- 论坛 ----
   getDiscussList(params) { return request.get('/discussList', { params }) },
