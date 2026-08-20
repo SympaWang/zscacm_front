@@ -100,7 +100,24 @@
             <span class="rank-badge" :class="'rank-' + Math.min(scope.row.id, 3)">{{ scope.row.id }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="name" label="姓名" min-width="110" />
+        <el-table-column prop="name" label="姓名" min-width="150">
+          <template #default="scope">
+            <span class="name-cell">
+              {{ scope.row.name }}
+              <span class="medal-icons" v-if="(scope.row.goldCount || 0) + (scope.row.silverCount || 0) + (scope.row.bronzeCount || 0) > 0">
+                <el-tooltip v-if="scope.row.goldCount" :content="'金牌 ' + scope.row.goldCount" placement="top">
+                  <span class="medal-icon gold">🥇<b>{{ scope.row.goldCount }}</b></span>
+                </el-tooltip>
+                <el-tooltip v-if="scope.row.silverCount" :content="'银牌 ' + scope.row.silverCount" placement="top">
+                  <span class="medal-icon silver">🥈<b>{{ scope.row.silverCount }}</b></span>
+                </el-tooltip>
+                <el-tooltip v-if="scope.row.bronzeCount" :content="'铜牌 ' + scope.row.bronzeCount" placement="top">
+                  <span class="medal-icon bronze">🥉<b>{{ scope.row.bronzeCount }}</b></span>
+                </el-tooltip>
+              </span>
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="grade" label="年级" width="90" sortable="custom" align="center" />
         <el-table-column prop="rating" label="当前CF分数" width="120" sortable="custom" align="center">
           <template #default="scope">
@@ -320,4 +337,12 @@ onMounted(() => {
 .rank-badge.rank-1 { background: linear-gradient(135deg, #ffd04b, #f7ba2a); color: #7c5c00; }
 .rank-badge.rank-2 { background: linear-gradient(135deg, #d3d9e0, #b8c0ca); color: #4a5568; }
 .rank-badge.rank-3 { background: linear-gradient(135deg, #f0b98d, #e29a63); color: #7a3d10; }
+
+.name-cell { display: inline-flex; align-items: center; gap: 6px; }
+.medal-icons { display: inline-flex; align-items: center; gap: 2px; }
+.medal-icon { display: inline-flex; align-items: center; font-size: 15px; line-height: 1; cursor: default; }
+.medal-icon b { font-size: 11px; margin-left: 1px; }
+.medal-icon.gold b { color: #d4a017; }
+.medal-icon.silver b { color: #7f8c9b; }
+.medal-icon.bronze b { color: #b87333; }
 </style>

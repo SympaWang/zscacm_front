@@ -37,6 +37,7 @@
             </el-sub-menu>
             <el-menu-item index="/discuss">讨论区</el-menu-item>
             <el-menu-item index="/rankland">大赛榜单</el-menu-item>
+            <el-menu-item index="/honor">历史荣誉</el-menu-item>
             <el-sub-menu v-if="store.state.login == 1 && store.state.userType <= 1" index="/manage" class="nav-right">
               <template #title>系统管理</template>
               <el-menu-item index="/manage/user">系统用户管理</el-menu-item>

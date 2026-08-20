@@ -43,6 +43,14 @@ export default {
   getRanklandCollections() { return request.get('/rankland/collections') },
   getRanklandRank(params) { return request.get('/rankland/rank', { params }) },
 
+  // ---- 历史荣誉 ----
+  getHonorOverview() { return request.get('/honor/overview') },
+  getHonorAwards(params) { return request.get('/honor/awards', { params }) },
+  getHonorTeams() { return request.get('/honor/teams') },
+  getHonorTeamMembers(params) { return request.get('/honor/teamMembers', { params }) },
+  getHonorMembers(params) { return request.get('/honor/members', { params }) },
+  getHonorMemberDetail(params) { return request.get('/honor/memberDetail', { params }) },
+
   // ---- 论坛 ----
   getDiscussList(params) { return request.get('/discussList', { params }) },
   addDiscuss(data) { return request.post('/addDiscuss', data) },

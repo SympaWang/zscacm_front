@@ -15,6 +15,7 @@ const routes = [
   { path: '/rating/review', component: () => import('../views/ContestReview.vue'), meta: { title: '比赛复盘' } },
   { path: '/discuss', component: () => import('../views/Discuss.vue'), meta: { title: '论坛' } },
   { path: '/rankland', component: () => import('../views/RanklandContests.vue'), meta: { title: '大赛榜单' } },
+  { path: '/honor', component: () => import('../views/SchoolHonor.vue'), meta: { title: '历史荣誉' } },
   { path: '/discuss/detail', name: 'discussDetail', component: () => import('../views/DiscussDetail.vue'), meta: { title: '帖子详情' } },
   { path: '/feedback', component: () => import('../views/Feedback.vue'), meta: { title: '意见反馈' } },
   { path: '/center/center', component: () => import('../views/UserCenter.vue'), meta: { title: '个人中心' } },
