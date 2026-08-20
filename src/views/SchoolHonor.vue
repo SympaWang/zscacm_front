@@ -6,7 +6,7 @@
       <div class="overview-grid" v-if="overview">
         <div class="ov-item">
           <div class="ov-num">{{ overview.totalCount || 0 }}</div>
-          <div class="ov-label">累计获奖场次</div>
+          <div class="ov-label">累计参赛场次</div>
         </div>
         <div class="ov-item">
           <div class="ov-num ov-gold">{{ overview.goldCount || 0 }}</div>
@@ -27,10 +27,10 @@
       </div>
     </div>
 
-    <!-- 获奖记录(可按队伍/年份筛选) -->
+    <!-- 参赛记录(可按队伍/年份筛选) -->
     <div class="page-card">
       <div class="card-header">
-        <h2 class="page-title">获奖记录</h2>
+        <h2 class="page-title">参赛记录</h2>
         <div class="filter-bar">
           <el-select v-model="teamFilter" placeholder="选择队伍" filterable clearable style="width: 220px" @change="loadAwards">
             <el-option v-for="t in teamList" :key="t.teamName" :label="teamLabel(t)" :value="t.teamName" />
@@ -49,7 +49,7 @@
             <el-link type="primary" :underline="false" @click="showTeamDetail(s.row.teamName)">{{ s.row.teamName }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="奖项" width="90" align="center">
+        <el-table-column label="成绩" width="90" align="center">
           <template #default="s">
             <el-tag v-if="s.row.medalType && s.row.medalType !== 'NONE'" :type="medalTagType(s.row.medalType)" size="small">{{ medalCn(s.row.medalType) }}</el-tag>
             <span v-else class="muted">—</span>
@@ -129,7 +129,7 @@
       <el-table :data="teamAwards" size="small" stripe>
         <el-table-column prop="date" label="时间" width="100" align="center" />
         <el-table-column prop="contestName" label="竞赛" min-width="200" show-overflow-tooltip />
-        <el-table-column label="奖项" width="90" align="center">
+        <el-table-column label="成绩" width="90" align="center">
           <template #default="s">
             <el-tag v-if="s.row.medalType && s.row.medalType !== 'NONE'" :type="medalTagType(s.row.medalType)" size="small">{{ medalCn(s.row.medalType) }}</el-tag>
             <span v-else class="muted">—</span>
@@ -160,7 +160,7 @@
         <el-table-column prop="date" label="时间" width="100" align="center" />
         <el-table-column prop="contestName" label="竞赛" min-width="200" show-overflow-tooltip />
         <el-table-column prop="teamName" label="队伍" min-width="130" />
-        <el-table-column label="奖项" width="90" align="center">
+        <el-table-column label="成绩" width="90" align="center">
           <template #default="s">
             <el-tag v-if="s.row.medalType && s.row.medalType !== 'NONE'" :type="medalTagType(s.row.medalType)" size="small">{{ medalCn(s.row.medalType) }}</el-tag>
             <span v-else class="muted">—</span>
