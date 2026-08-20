@@ -27,49 +27,6 @@
       </div>
     </div>
 
-    <!-- 参赛记录(历年参赛,来自大赛榜单) -->
-    <div class="page-card">
-      <div class="card-header">
-        <h2 class="page-title">参赛记录 <span class="sub-note">(来自大赛榜单,最早 {{ partOverview.earliestDate || '-' }})</span></h2>
-        <div class="filter-bar">
-          <el-select v-model="partYear" placeholder="选择年份" clearable style="width: 120px" @change="loadParticipations">
-            <el-option v-for="y in partYears" :key="y.year" :label="y.year + ' (' + y.cnt + ')'" :value="y.year" />
-          </el-select>
-        </div>
-      </div>
-      <div class="part-stats" v-if="partOverview">
-        <span class="part-stat">累计参赛 <b>{{ partOverview.totalCount }}</b> 场次</span>
-        <span class="part-stat">覆盖 <b>{{ partOverview.contestCount }}</b> 场比赛</span>
-        <span class="part-stat"><b>{{ partOverview.teamCount }}</b> 支队伍</span>
-        <span class="part-stat">时间跨度 <b>{{ partOverview.earliestDate }}</b> ~ <b>{{ partOverview.latestDate }}</b></span>
-      </div>
-      <el-table :data="participations" v-loading="partLoading" size="small" stripe max-height="480">
-        <el-table-column prop="date" label="时间" width="100" align="center" />
-        <el-table-column prop="contestName" label="竞赛" min-width="230" show-overflow-tooltip />
-        <el-table-column prop="teamName" label="队伍" min-width="140" show-overflow-tooltip />
-        <el-table-column label="奖牌" width="90" align="center">
-          <template #default="s">
-            <el-tag v-if="s.row.medalType" :type="medalTagType(s.row.medalType)" size="small" effect="dark">{{ medalCn(s.row.medalType) }}</el-tag>
-            <span v-else class="muted">—</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="名次" width="95" align="center">
-          <template #default="s">{{ s.row.rank }} / {{ s.row.totalRows }}</template>
-        </el-table-column>
-        <el-table-column prop="acCount" label="AC题数" width="80" align="center" />
-        <el-table-column label="罚时" width="90" align="center">
-          <template #default="s">{{ formatTime(s.row.timeSec) }}</template>
-        </el-table-column>
-        <el-table-column label="类型" width="80" align="center">
-          <template #default="s">
-            <el-tag v-if="s.row.official" size="small" type="success" effect="plain">正式</el-tag>
-            <el-tag v-else size="small" type="info" effect="plain">打星</el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div class="part-note">注:参赛记录源自 RankLand 大赛榜单,含网络赛/邀请赛/区域赛/省赛等全部场次;现场赛奖牌按榜单金银铜名额规则推算。</div>
-    </div>
-
     <!-- 获奖记录(可按队伍/年份筛选) -->
     <div class="page-card">
       <div class="card-header">
@@ -239,11 +196,6 @@ const activeMember = ref('')
 const memberDialogVisible = ref(false)
 const memberAwards = ref([])
 const memberSummary = ref(null)
-const partOverview = ref(null)
-const partYears = ref([])
-const partYear = ref('')
-const participations = ref([])
-const partLoading = ref(false)
 
 const medalCnMap = { GOLD: '金牌', SILVER: '银牌', BRONZE: '铜牌' }
 function medalCn(t) { return medalCnMap[t] || t }
@@ -331,40 +283,11 @@ function showMemberDetail(name) {
   }).catch(e => console.log(e))
 }
 
-function formatTime(sec) {
-  if (sec == null) return '-'
-  const h = Math.floor(sec / 3600)
-  const m = Math.floor((sec % 3600) / 60)
-  if (h > 0) return h + 'h' + m + 'm'
-  return m + 'm'
-}
-
-function loadParticipations() {
-  partLoading.value = true
-  api.getHonorParticipations({ year: partYear.value || undefined }).then(res => {
-    partLoading.value = false
-    if (res.data.code === 200) {
-      participations.value = res.data.data || []
-    }
-  }).catch(e => { partLoading.value = false; console.log(e) })
-}
-
-function loadParticipationOverview() {
-  api.getHonorParticipationOverview().then(res => {
-    if (res.data.code === 200) {
-      partOverview.value = res.data.data.overview || null
-      partYears.value = res.data.data.years || []
-    }
-  }).catch(e => console.log(e))
-}
-
 onMounted(() => {
   loadOverview()
   loadTeams()
   loadAwards()
   loadMembers()
-  loadParticipationOverview()
-  loadParticipations()
 })
 </script>
 
@@ -393,7 +316,4 @@ onMounted(() => {
 .member-chip { white-space: nowrap; }
 .muted { color: #bbb; }
 .sub-note { font-size: 12px; color: #999; font-weight: 400; }
-.part-stats { display: flex; gap: 24px; flex-wrap: wrap; margin: 0 0 12px; padding: 10px 14px; background: #f7f9fc; border-radius: 8px; font-size: 13px; color: #666; }
-.part-stat b { color: #409eff; }
-.part-note { margin-top: 10px; font-size: 12px; color: #aaa; }
 </style>
