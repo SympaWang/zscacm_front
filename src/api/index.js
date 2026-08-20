@@ -12,6 +12,7 @@ export default {
   updateUserDetail(data) { return request.post('/updateUserDetail', data) },
   addUser(data) { return request.post('/addUser', data) },
   deleteUser(data) { return request.post('/deleteUser', data) },
+  getLoginLogList(params) { return request.get('/loginLogList', { params }) },
 
   // ---- 比赛 ----
   getFutureContests() { return request.get('/FutureContests') },

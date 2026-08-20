@@ -23,6 +23,7 @@ const routes = [
   { path: '/center/message', component: () => import('../views/Message.vue'), meta: { title: '消息' } },
   { path: '/center/changePassword', component: () => import('../views/ChangePassword.vue'), meta: { title: '修改密码' } },
   { path: '/manage/user', component: () => import('../views/ManageUser.vue'), meta: { title: '用户管理' } },
+  { path: '/manage/log', component: () => import('../views/ManageLoginLog.vue'), meta: { title: '登录记录' } },
   { path: '/manage/discuss', component: () => import('../views/ManageDiscuss.vue'), meta: { title: '帖子管理' } },
   { path: '/about', component: () => import('../views/About.vue'), meta: { title: '关于' } }
 ]
