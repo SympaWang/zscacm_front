@@ -7,7 +7,7 @@
           <!-- 管理员:选择成员查看指定队员复盘 -->
           <template v-if="isAdmin">
             <el-select v-model="selectedHandle" placeholder="选择成员查看个人复盘" filterable clearable style="width: 260px" @change="onMemberChange">
-              <el-option v-for="m in memberHandles" :key="m" :label="m" :value="m" />
+              <el-option v-for="m in memberOptions" :key="m.handle" :label="m.label" :value="m.handle" />
             </el-select>
             <el-button size="small" :type="mode === 'team' ? 'primary' : 'default'" plain @click="loadTeam">整体复盘</el-button>
           </template>
@@ -138,8 +138,9 @@
         <el-table-column label="队员" min-width="160">
           <template #default="s">
             <span :style="{ fontWeight: s.row.isMe ? 700 : 400, color: s.row.isMe ? '#e6a23c' : '#333' }">
-              {{ s.row.handle }}<span v-if="s.row.isMe"> (我)</span>
+              {{ displayName(s.row) }}<span v-if="s.row.isMe"> (我)</span>
             </span>
+            <div v-if="s.row.name && s.row.handle !== s.row.name" class="member-handle">{{ s.row.handle }}</div>
           </template>
         </el-table-column>
         <el-table-column prop="acCount" label="AC题数" width="100" align="center" />
@@ -191,7 +192,7 @@ const overview = ref(null)
 const problems = ref([])
 const peers = ref([])
 const members = ref([])
-const memberHandles = ref([])
+const memberOptions = ref([])
 const selectedHandle = ref('')
 const loginVisible = ref(false)
 const aiSummary = ref('')
@@ -266,7 +267,7 @@ function loadTeam() {
       overview.value = d.overview || null
       problems.value = d.problems || []
       members.value = (d.members || []).map(m => ({ ...m, isMe: false }))
-      memberHandles.value = (d.members || []).map(m => m.handle)
+      memberOptions.value = buildMemberOptions(d.members || [])
       selectedHandle.value = ''
       aiSummary.value = d.aiSummary || ''
     } else {
@@ -294,8 +295,8 @@ function loadMember() {
       overview.value = d.overview || null
       problems.value = d.problems || []
       peers.value = (d.peers || []).map(p => ({ ...p, isMe: p.handle === d.handle }))
-      if (!memberHandles.value.length && d.peers) {
-        memberHandles.value = d.peers.map(p => p.handle)
+      if (!memberOptions.value.length && d.peers) {
+        memberOptions.value = buildMemberOptions(d.peers)
       }
       aiSummary.value = d.aiSummary || ''
     } else {
@@ -347,6 +348,25 @@ function ratingType(r) {
   return 'success'
 }
 
+// 队员显示名:优先真实姓名,无则回退 handle
+function displayName(row) {
+  if (row && row.name && String(row.name).trim()) return row.name
+  return row ? row.handle : ''
+}
+
+// 管理员下拉选项:label 用"姓名 (handle)"
+function buildMemberOptions(list) {
+  const seen = new Set()
+  const opts = []
+  for (const m of list || []) {
+    if (!m.handle || seen.has(m.handle)) continue
+    seen.add(m.handle)
+    const name = m.name && String(m.name).trim() ? m.name : m.handle
+    opts.push({ handle: m.handle, label: name === m.handle ? name : `${name} (${m.handle})` })
+  }
+  return opts
+}
+
 function statusType(s) {
   if (s === 'AC') return 'success'
   if (s === 'WA') return 'danger'
@@ -375,4 +395,5 @@ function forceLogin() { router.push('/login') }
 .ai-summary { background: #f0f9eb; border: 1px solid #e1f3d8; border-radius: 8px; padding: 14px 18px; font-size: 14px; line-height: 1.8; }
 .ai-summary :deep(.ai-title) { font-weight: 700; color: #67c23a; margin-top: 8px; }
 .ai-summary :deep(.ai-item) { margin: 2px 0; color: #333; }
+.member-handle { font-size: 12px; color: #a0a7b5; }
 </style>
