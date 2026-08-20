@@ -50,6 +50,8 @@ export default {
   getHonorTeamMembers(params) { return request.get('/honor/teamMembers', { params }) },
   getHonorMembers(params) { return request.get('/honor/members', { params }) },
   getHonorMemberDetail(params) { return request.get('/honor/memberDetail', { params }) },
+  getHonorParticipationOverview() { return request.get('/honor/participationOverview') },
+  getHonorParticipations(params) { return request.get('/honor/participations', { params }) },
 
   // ---- 论坛 ----
   getDiscussList(params) { return request.get('/discussList', { params }) },
