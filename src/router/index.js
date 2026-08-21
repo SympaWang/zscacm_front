@@ -13,10 +13,9 @@ const routes = [
   { path: '/rating/user', component: () => import('../views/UserRating.vue'), meta: { title: '用户Rating' } },
   { path: '/rating/contest', component: () => import('../views/ContestRating.vue'), meta: { title: '比赛Rating' } },
   { path: '/rating/review', component: () => import('../views/ContestReview.vue'), meta: { title: '比赛复盘' } },
-  { path: '/discuss', component: () => import('../views/Discuss.vue'), meta: { title: '论坛' } },
+  { path: '/resource', component: () => import('../views/ResourceCenter.vue'), meta: { title: '资料汇总' } },
   { path: '/rankland', component: () => import('../views/RanklandContests.vue'), meta: { title: '大赛榜单' } },
   { path: '/honor', component: () => import('../views/SchoolHonor.vue'), meta: { title: '历史荣誉' } },
-  { path: '/discuss/detail', name: 'discussDetail', component: () => import('../views/DiscussDetail.vue'), meta: { title: '帖子详情' } },
   { path: '/feedback', component: () => import('../views/Feedback.vue'), meta: { title: '意见反馈' } },
   { path: '/center/center', component: () => import('../views/UserCenter.vue'), meta: { title: '个人中心' } },
   { path: '/center/home', component: () => import('../views/PersonalHome.vue'), meta: { title: '个人首页' } },
@@ -25,7 +24,6 @@ const routes = [
   { path: '/center/changePassword', component: () => import('../views/ChangePassword.vue'), meta: { title: '修改密码' } },
   { path: '/manage/user', component: () => import('../views/ManageUser.vue'), meta: { title: '用户管理' } },
   { path: '/manage/log', component: () => import('../views/ManageLoginLog.vue'), meta: { title: '登录记录' } },
-  { path: '/manage/discuss', component: () => import('../views/ManageDiscuss.vue'), meta: { title: '帖子管理' } },
   { path: '/about', component: () => import('../views/About.vue'), meta: { title: '关于' } }
 ]
 

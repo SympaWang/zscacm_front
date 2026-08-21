@@ -35,14 +35,13 @@
               <el-menu-item index="/rating/user">查看某个队员</el-menu-item>
               <el-menu-item index="/rating/contest">查看某场比赛</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="/discuss">讨论区</el-menu-item>
+            <el-menu-item index="/resource">资料汇总</el-menu-item>
             <el-menu-item index="/rankland">大赛榜单</el-menu-item>
             <el-menu-item index="/honor">历史荣誉</el-menu-item>
             <el-sub-menu v-if="store.state.login == 1 && store.state.userType <= 1" index="/manage" class="nav-right">
               <template #title>系统管理</template>
               <el-menu-item index="/manage/user">系统用户管理</el-menu-item>
               <el-menu-item index="/manage/log">登录记录</el-menu-item>
-              <el-menu-item index="/manage/discuss">帖子管理</el-menu-item>
             </el-sub-menu>
             <el-menu-item v-if="store.state.login == 0" index="/login" class="nav-right">登录</el-menu-item>
             <el-sub-menu v-if="store.state.login == 1" index="/user" class="nav-right">
