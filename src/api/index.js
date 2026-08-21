@@ -67,6 +67,7 @@ export default {
   resourceConvert(data) { return request.post('/resource/convert', data) },
   resourceDelete(data) { return request.post('/resource/delete', data) },
   resourceRename(data) { return request.post('/resource/rename', data) },
+  resourceLock(data) { return request.post('/resource/lock', data) },
   getResourceContent(params) { return request.get('/resource/content', { params, responseType: 'blob' }) },
 
   // ---- 消息 ----

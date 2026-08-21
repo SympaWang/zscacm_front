@@ -48,7 +48,7 @@
         >
           <template #default="{ data }">
             <span class="tree-node" :class="{ 'is-file': data.type === 'file' }">
-              <span class="node-icon">{{ data.type === 'dir' ? '📁' : fileIcon(data.name) }}</span>
+              <span class="node-icon">{{ data.type === 'dir' ? (data.locked ? '🔒' : '📁') : fileIcon(data.name) }}</span>
               <span class="node-name">{{ data.name }}</span>
               <span class="node-size" v-if="data.type === 'file'">{{ formatSize(data.size) }}</span>
             </span>
@@ -59,6 +59,9 @@
         <div v-if="ctxMenu.visible && isLogin" class="ctx-menu" :style="{ left: ctxMenu.x + 'px', top: ctxMenu.y + 'px' }">
           <div class="ctx-item" @click="ctxMkdir"><el-icon><FolderAdd /></el-icon>在此新建目录</div>
           <div class="ctx-item" @click="ctxUpload"><el-icon><Upload /></el-icon>上传文件</div>
+          <div v-if="isAdmin && ctxMenu.node && ctxMenu.node.type === 'dir'" class="ctx-item" @click="ctxLock">
+            <el-icon><Lock /></el-icon>{{ ctxMenu.node.locked ? '解锁目录' : '锁定目录' }}
+          </div>
           <div class="ctx-item" @click="ctxRename"><el-icon><Edit /></el-icon>重命名</div>
           <div class="ctx-item danger" @click="ctxDelete"><el-icon><Delete /></el-icon>删除</div>
         </div>
@@ -145,12 +148,14 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { FolderAdd, Upload, Edit, Delete, Download, Document } from '@element-plus/icons-vue'
+import { FolderAdd, Upload, Edit, Delete, Download, Document, Lock } from '@element-plus/icons-vue'
 import api from '../api'
 
 const store = useStore()
 // 是否已登录(未登录仅允许查看/下载)
 const isLogin = computed(() => store.state.login === 1)
+// 是否管理员(userType 0=超管,1=管理员)
+const isAdmin = computed(() => store.state.login === 1 && store.state.userType <= 1)
 
 const treeData = ref([])
 const treeProps = { children: 'children', label: 'name' }
@@ -393,6 +398,20 @@ function ctxRename() {
   renameTarget.value = ctxMenu.node.path
   renameName.value = ctxMenu.node.name
   renameVisible.value = true
+}
+
+function ctxLock() {
+  closeCtx()
+  if (!ctxMenu.node || ctxMenu.node.type !== 'dir') return
+  const targetLocked = !ctxMenu.node.locked
+  api.resourceLock({ path: ctxMenu.node.path, locked: targetLocked }).then(res => {
+    if (res.data.code === 200) {
+      ElMessage.success(res.data.msg || (targetLocked ? '已锁定' : '已解锁'))
+      loadTree()
+    } else {
+      ElMessage.error(res.data.msg || '操作失败')
+    }
+  }).catch(e => console.log(e))
 }
 
 function ctxDelete() {
