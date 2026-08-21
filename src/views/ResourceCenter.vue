@@ -10,7 +10,7 @@
         <el-icon style="margin-right: 4px"><Document /></el-icon>MD 转 PDF
       </el-button>
       <span v-if="!isLogin" class="toolbar-tip">登录后可转换文档</span>
-      <span class="toolbar-hint" v-if="convertTip">转换结果保存到当前选中目录,未选中则根目录</span>
+      <span class="toolbar-hint" v-if="convertTip">转换结果保存到你的专属目录</span>
       <input ref="convertInput" type="file" style="display:none" @change="handleConvertSelect" />
     </div>
     <div class="resource-layout">
@@ -338,12 +338,10 @@ function handleConvertSelect(e) {
     ElMessage.warning('仅支持 Word(.docx/.doc)或 Markdown(.md)文件')
     return
   }
-  // 转换保存到当前选中目录
-  const path = currentDirPath()
+  // 转换结果自动保存到当前用户的专属目录
   const fd = new FormData()
   fd.append('file', file)
-  fd.append('path', path)
-  ElMessage.info('正在转换,请稍候…')
+  ElMessage.info('正在转换,结果将保存到你的专属目录,请稍候…')
   api.resourceConvert(fd).then(res => {
     convertTip.value = false
     if (res.data.code === 200) {
