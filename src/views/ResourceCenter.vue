@@ -11,6 +11,19 @@
       </el-button>
       <span v-if="!isLogin" class="toolbar-tip">登录后可转换文档</span>
       <span class="toolbar-hint" v-if="convertTip">转换结果保存到你的专属目录</span>
+      <div class="toolbar-search">
+        <el-input
+          v-model="searchKeyword"
+          size="small"
+          placeholder="搜索文件名 / 内容"
+          clearable
+          style="width: 240px"
+          @keyup.enter="doSearch"
+        >
+          <template #prefix><el-icon><Search /></el-icon></template>
+        </el-input>
+        <el-button size="small" type="primary" plain @click="doSearch">搜索</el-button>
+      </div>
       <input ref="convertInput" type="file" style="display:none" @change="handleConvertSelect" />
     </div>
     <div class="resource-layout">
@@ -83,6 +96,9 @@
           <!-- 文本预览 -->
           <pre v-else-if="previewType === 'text'" class="text-view">{{ previewText }}</pre>
 
+          <!-- Markdown 渲染预览 -->
+          <div v-else-if="previewType === 'md'" class="md-view" v-html="previewMdHtml"></div>
+
           <!-- 图片预览 -->
           <div v-else-if="previewType === 'image'" class="image-view">
             <img :src="previewUrl" alt="图片预览" />
@@ -141,14 +157,43 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 搜索结果弹窗 -->
+    <el-dialog v-model="searchVisible" title="🔍 搜索结果" width="640px" align-center>
+      <div class="search-body" v-loading="searchLoading">
+        <template v-if="!searchLoading && searchResults.length === 0">
+          <div class="preview-empty" style="padding: 40px 0">
+            <div class="empty-icon">🔍</div>
+            <p>未找到匹配的文件</p>
+          </div>
+        </template>
+        <div v-for="r in searchResults" :key="r.path" class="search-item" @click="openSearchResult(r)">
+          <span class="search-icon">{{ fileIcon(r.name) }}</span>
+          <div class="search-info">
+            <div class="search-name">
+              {{ r.name }}
+              <el-tag size="small" :type="r.match === 'name' ? 'success' : 'warning'" style="margin-left: 6px">
+                {{ r.match === 'name' ? '文件名' : '内容' }}
+              </el-tag>
+            </div>
+            <div class="search-path">{{ r.path }}</div>
+            <div v-if="r.snippet" class="search-snippet">…{{ r.snippet }}…</div>
+          </div>
+          <span class="search-size">{{ formatSize(r.size) }}</span>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { FolderAdd, Upload, Edit, Delete, Download, Document, Lock } from '@element-plus/icons-vue'
+import { FolderAdd, Upload, Edit, Delete, Download, Document, Lock, Search } from '@element-plus/icons-vue'
+import { marked } from 'marked'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github.css'
 import api from '../api'
 
 const store = useStore()
@@ -166,8 +211,13 @@ const convertTip = ref(false)
 const currentFile = ref(null)
 const previewLoading = ref(false)
 const previewText = ref('')
+const previewMdHtml = ref('')
 const previewUrl = ref('')
 const previewType = ref('')
+const searchKeyword = ref('')
+const searchVisible = ref(false)
+const searchLoading = ref(false)
+const searchResults = ref([])
 const mkdirVisible = ref(false)
 const mkdirName = ref('')
 const mkdirParent = ref('')
@@ -227,15 +277,30 @@ function openPreview(file) {
   currentFile.value = file
   previewLoading.value = true
   previewText.value = ''
+  previewMdHtml.value = ''
   previewUrl.value = ''
   const ext = getExt(file.name)
   if (TEXT_EXT.includes(ext)) {
     // 文本:请求后转字符串(后端直接返回纯文本)
     api.getResourceContent({ path: file.path }).then(res => {
       previewLoading.value = false
-      previewType.value = 'text'
       const reader = new FileReader()
-      reader.onload = e => { previewText.value = e.target.result }
+      reader.onload = e => {
+        const text = e.target.result
+        if (ext === 'md' || ext === 'markdown') {
+          // Markdown 渲染 + 代码高亮
+          previewType.value = 'md'
+          previewMdHtml.value = marked.parse(text)
+          nextTick(() => {
+            document.querySelectorAll('.md-view pre code').forEach(el => {
+              hljs.highlightElement(el)
+            })
+          })
+        } else {
+          previewType.value = 'text'
+          previewText.value = text
+        }
+      }
       reader.readAsText(res.data)
     }).catch(e => { previewLoading.value = false; ElMessage.error('读取失败'); console.log(e) })
   } else if (IMG_EXT.includes(ext)) {
@@ -447,6 +512,44 @@ function doRename() {
   }).catch(e => console.log(e))
 }
 
+// ---- 搜索 ----
+function doSearch() {
+  const kw = searchKeyword.value.trim()
+  if (!kw) { ElMessage.warning('请输入搜索关键词'); return }
+  searchLoading.value = true
+  searchVisible.value = true
+  searchResults.value = []
+  api.resourceSearch({ keyword: kw, limit: 50 }).then(res => {
+    searchLoading.value = false
+    if (res.data.code === 200) {
+      searchResults.value = res.data.data || []
+      if (searchResults.value.length === 0) ElMessage.info('未找到匹配的文件')
+    } else {
+      ElMessage.error(res.data.msg || '搜索失败')
+    }
+  }).catch(e => {
+    searchLoading.value = false
+    console.log(e)
+    ElMessage.error('搜索失败')
+  })
+}
+
+// 点击搜索结果:定位树节点并预览
+function openSearchResult(item) {
+  searchVisible.value = false
+  // 在树中查找该节点并展开其祖先目录
+  const node = treeRef.value ? treeRef.value.getNode(item.path) : null
+  if (node) {
+    let p = node.parent
+    while (p && p.level > 0) {
+      p.expanded = true
+      p = p.parent
+    }
+    treeRef.value.setCurrentKey(item.path)
+  }
+  openPreview({ name: item.name, path: item.path, size: item.size })
+}
+
 // ---- 工具函数 ----
 function getExt(name) {
   const idx = name.lastIndexOf('.')
@@ -486,6 +589,7 @@ onMounted(() => {
 .toolbar-title { font-weight: 600; font-size: 14px; color: #1f2d3d; margin-right: 4px; }
 .toolbar-tip { font-size: 12px; color: #a0a7b5; }
 .toolbar-hint { font-size: 12px; color: #a0a7b5; margin-left: auto; }
+.toolbar-search { display: flex; align-items: center; gap: 8px; }
 .resource-layout { display: flex; gap: 12px; height: calc(100% - 52px); }
 .tree-panel { width: 320px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.05); display: flex; flex-direction: column; overflow: hidden; position: relative; }
 .tree-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #f0f2f5; }
@@ -512,4 +616,34 @@ onMounted(() => {
 .ctx-item:hover { background: #f0f4fb; }
 .ctx-item.danger { color: #f56c6c; }
 .ctx-item.danger:hover { background: #fef0f0; }
+/* 搜索结果 */
+.search-body { min-height: 100px; max-height: 55vh; overflow: auto; }
+.search-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; cursor: pointer; border-bottom: 1px solid #f5f7fa; }
+.search-item:hover { background: #f0f4fb; }
+.search-icon { font-size: 20px; flex-shrink: 0; }
+.search-info { flex: 1; min-width: 0; }
+.search-name { font-size: 13px; font-weight: 600; color: #333; display: flex; align-items: center; }
+.search-path { font-size: 12px; color: #a0a7b5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-snippet { font-size: 12px; color: #909399; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-size { font-size: 12px; color: #a0a7b5; flex-shrink: 0; }
+/* Markdown 渲染排版 */
+.md-view { font-size: 14px; line-height: 1.75; color: #24292e; word-break: break-word; }
+.md-view h1, .md-view h2, .md-view h3, .md-view h4, .md-view h5, .md-view h6 { margin: 1.2em 0 0.6em; font-weight: 600; line-height: 1.4; }
+.md-view h1 { font-size: 1.7em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+.md-view h2 { font-size: 1.4em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+.md-view h3 { font-size: 1.2em; }
+.md-view p { margin: 0.6em 0; }
+.md-view ul, .md-view ol { padding-left: 1.8em; margin: 0.6em 0; }
+.md-view li { margin: 0.2em 0; }
+.md-view blockquote { margin: 0.8em 0; padding: 0.3em 1em; color: #6a737d; border-left: 4px solid #dfe2e5; background: #f8f9fa; border-radius: 0 4px 4px 0; }
+.md-view code { background: rgba(27,31,35,.06); padding: 0.2em 0.4em; border-radius: 4px; font-size: 13px; font-family: Consolas, Menlo, monospace; }
+.md-view pre { background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 12px 14px; overflow: auto; margin: 0.8em 0; }
+.md-view pre code { background: transparent; padding: 0; font-size: 13px; line-height: 1.6; }
+.md-view table { border-collapse: collapse; margin: 0.8em 0; width: 100%; }
+.md-view th, .md-view td { border: 1px solid #dfe2e5; padding: 6px 12px; }
+.md-view th { background: #f6f8fa; font-weight: 600; }
+.md-view img { max-width: 100%; border-radius: 4px; }
+.md-view hr { border: none; border-top: 1px solid #eaecef; margin: 1.5em 0; }
+.md-view a { color: #0366d6; text-decoration: none; }
+.md-view a:hover { text-decoration: underline; }
 </style>
