@@ -1,5 +1,18 @@
 <template>
   <div class="resource-page">
+    <!-- 顶部工具条 -->
+    <div class="toolbar">
+      <span class="toolbar-title">🛠 文档转换</span>
+      <el-button v-if="isLogin" size="small" type="primary" @click="convertWord">
+        <el-icon style="margin-right: 4px"><Document /></el-icon>Word 转 PDF
+      </el-button>
+      <el-button v-if="isLogin" size="small" type="success" @click="convertMd">
+        <el-icon style="margin-right: 4px"><Document /></el-icon>MD 转 PDF
+      </el-button>
+      <span v-if="!isLogin" class="toolbar-tip">登录后可转换文档</span>
+      <span class="toolbar-hint" v-if="convertTip">转换结果保存到当前选中目录,未选中则根目录</span>
+      <input ref="convertInput" type="file" style="display:none" @change="handleConvertSelect" />
+    </div>
     <div class="resource-layout">
       <!-- 左侧:文件目录树 -->
       <div class="tree-panel">
@@ -132,7 +145,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { FolderAdd, Upload, Edit, Delete, Download } from '@element-plus/icons-vue'
+import { FolderAdd, Upload, Edit, Delete, Download, Document } from '@element-plus/icons-vue'
 import api from '../api'
 
 const store = useStore()
@@ -143,6 +156,8 @@ const treeData = ref([])
 const treeProps = { children: 'children', label: 'name' }
 const treeRef = ref(null)
 const fileInput = ref(null)
+const convertInput = ref(null)
+const convertTip = ref(false)
 const currentFile = ref(null)
 const previewLoading = ref(false)
 const previewText = ref('')
@@ -300,6 +315,50 @@ function uploadFile(file, path) {
   }).catch(e => console.log(e))
 }
 
+// ---- 文档转换 ----
+function convertWord() {
+  convertTip.value = true
+  convertInput.value.accept = '.docx,.doc'
+  convertInput.value.click()
+}
+
+function convertMd() {
+  convertTip.value = true
+  convertInput.value.accept = '.md,.markdown'
+  convertInput.value.click()
+}
+
+function handleConvertSelect(e) {
+  const file = e.target.files[0]
+  e.target.value = ''
+  if (!file) return
+  const ext = (file.name.split('.').pop() || '').toLowerCase()
+  const okExt = ['docx', 'doc', 'md', 'markdown']
+  if (!okExt.includes(ext)) {
+    ElMessage.warning('仅支持 Word(.docx/.doc)或 Markdown(.md)文件')
+    return
+  }
+  // 转换保存到当前选中目录
+  const path = currentDirPath()
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('path', path)
+  ElMessage.info('正在转换,请稍候…')
+  api.resourceConvert(fd).then(res => {
+    convertTip.value = false
+    if (res.data.code === 200) {
+      ElMessage.success(res.data.msg || '转换成功')
+      loadTree()
+    } else {
+      ElMessage.error(res.data.msg || '转换失败')
+    }
+  }).catch(e => {
+    convertTip.value = false
+    console.log(e)
+    ElMessage.error('转换失败')
+  })
+}
+
 // ---- 右键菜单 ----
 function onContextMenu(event, data) {
   if (!isLogin.value) return // 未登录不允许操作
@@ -406,7 +465,11 @@ onMounted(() => {
 
 <style scoped>
 .resource-page { padding: 8px; height: calc(100vh - 160px); }
-.resource-layout { display: flex; gap: 12px; height: 100%; }
+.toolbar { background: #fff; border-radius: 8px; padding: 10px 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.05); display: flex; align-items: center; gap: 12px; }
+.toolbar-title { font-weight: 600; font-size: 14px; color: #1f2d3d; margin-right: 4px; }
+.toolbar-tip { font-size: 12px; color: #a0a7b5; }
+.toolbar-hint { font-size: 12px; color: #a0a7b5; margin-left: auto; }
+.resource-layout { display: flex; gap: 12px; height: calc(100% - 52px); }
 .tree-panel { width: 320px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.05); display: flex; flex-direction: column; overflow: hidden; position: relative; }
 .tree-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #f0f2f5; }
 .tree-title { font-weight: 600; font-size: 15px; color: #1f2d3d; }

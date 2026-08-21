@@ -64,6 +64,7 @@ export default {
   getResourceTree() { return request.get('/resource/tree') },
   resourceMkdir(data) { return request.post('/resource/mkdir', data) },
   resourceUpload(data) { return request.post('/resource/upload', data) },
+  resourceConvert(data) { return request.post('/resource/convert', data) },
   resourceDelete(data) { return request.post('/resource/delete', data) },
   resourceRename(data) { return request.post('/resource/rename', data) },
   getResourceContent(params) { return request.get('/resource/content', { params, responseType: 'blob' }) },
