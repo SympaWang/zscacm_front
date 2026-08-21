@@ -173,8 +173,20 @@ function loadTree() {
       const root = res.data.data.root
       // 根节点为挂载点,显示其子节点
       treeData.value = root && root.children ? root.children : []
+      // 刷新后清空选中,避免 current node 指向已删除的目录
+      if (treeRef.value) treeRef.value.setCurrentKey(null)
     }
   }).catch(e => console.log(e))
+}
+
+// 获取当前有效选中目录路径(若指向已不存在的目录则回退根目录)
+function currentDirPath() {
+  const cur = treeRef.value ? treeRef.value.getCurrentNode() : null
+  if (cur && cur.type === 'dir') {
+    // 校验该目录仍存在于树中
+    if (dirOptions.value.some(d => d.path === cur.path)) return cur.path
+  }
+  return ''
 }
 
 function onNodeClick(data) {
@@ -233,9 +245,8 @@ function downloadCurrent() {
 
 // ---- 新建目录 ----
 function openMkdir() {
-  // 默认父目录为当前选中目录(未选中则根目录)
-  const cur = treeRef.value ? treeRef.value.getCurrentNode() : null
-  mkdirParent.value = cur && cur.type === 'dir' ? cur.path : ''
+  // 默认父目录为当前选中目录(未选中或已删除则根目录)
+  mkdirParent.value = currentDirPath()
   mkdirName.value = ''
   mkdirVisible.value = true
 }
@@ -255,9 +266,8 @@ function doMkdir() {
 
 // ---- 上传 ----
 function triggerUpload() {
-  // 上传到当前选中目录(未选中则根目录)
-  const cur = treeRef.value ? treeRef.value.getCurrentNode() : null
-  uploadPath = cur && cur.type === 'dir' ? cur.path : ''
+  // 上传到当前选中目录(未选中或已删除则根目录)
+  uploadPath = currentDirPath()
   fileInput.value.click()
 }
 
