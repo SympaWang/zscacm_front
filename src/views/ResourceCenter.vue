@@ -91,7 +91,10 @@
     <el-dialog v-model="mkdirVisible" title="新建目录" width="380px" align-center>
       <el-form label-width="70px">
         <el-form-item label="父目录">
-          <el-input :model-value="mkdirParent === '' ? '/ (根目录)' : mkdirParent" disabled />
+          <el-select v-model="mkdirParent" filterable placeholder="选择父目录(默认根目录)" style="width: 100%">
+            <el-option label="/ (根目录)" value="" />
+            <el-option v-for="d in dirOptions" :key="d.path" :label="d.path" :value="d.path" />
+          </el-select>
         </el-form-item>
         <el-form-item label="目录名">
           <el-input v-model="mkdirName" placeholder="请输入目录名称" maxlength="60" @keyup.enter="doMkdir" />
@@ -148,6 +151,21 @@ const ctxMenu = reactive({ visible: false, x: 0, y: 0, node: null })
 const TEXT_EXT = ['txt', 'md', 'markdown', 'log', 'json', 'xml', 'html', 'htm', 'css', 'js', 'java', 'cpp', 'c', 'h', 'py', 'sql', 'yml', 'yaml', 'csv', 'ini', 'conf', 'sh', 'bat', 'properties']
 const IMG_EXT = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp']
 const VIDEO_EXT = ['mp4', 'webm', 'ogg', 'mov']
+
+// 所有目录路径(用于父目录选择)
+const dirOptions = computed(() => {
+  const result = []
+  const walk = nodes => {
+    for (const n of nodes || []) {
+      if (n.type === 'dir') {
+        result.push(n)
+        walk(n.children)
+      }
+    }
+  }
+  walk(treeData.value)
+  return result
+})
 
 function loadTree() {
   api.getResourceTree().then(res => {
@@ -215,7 +233,9 @@ function downloadCurrent() {
 
 // ---- 新建目录 ----
 function openMkdir() {
-  mkdirParent.value = ''
+  // 默认父目录为当前选中目录(未选中则根目录)
+  const cur = treeRef.value ? treeRef.value.getCurrentNode() : null
+  mkdirParent.value = cur && cur.type === 'dir' ? cur.path : ''
   mkdirName.value = ''
   mkdirVisible.value = true
 }
