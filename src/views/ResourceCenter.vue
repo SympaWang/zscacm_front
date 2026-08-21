@@ -6,16 +6,19 @@
         <div class="tree-header">
           <span class="tree-title">📁 资料目录</span>
           <div class="tree-actions">
-            <el-tooltip content="新建目录" placement="top">
-              <el-button size="small" circle type="primary" plain @click="openMkdir">
-                <el-icon><FolderAdd /></el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="上传文件" placement="top">
-              <el-button size="small" circle type="success" plain @click="triggerUpload">
-                <el-icon><Upload /></el-icon>
-              </el-button>
-            </el-tooltip>
+            <template v-if="isLogin">
+              <el-tooltip content="新建目录" placement="top">
+                <el-button size="small" circle type="primary" plain @click="openMkdir">
+                  <el-icon><FolderAdd /></el-icon>
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="上传文件" placement="top">
+                <el-button size="small" circle type="success" plain @click="triggerUpload">
+                  <el-icon><Upload /></el-icon>
+                </el-button>
+              </el-tooltip>
+            </template>
+            <span v-else class="login-tip">登录后可编辑</span>
           </div>
           <input ref="fileInput" type="file" style="display:none" @change="handleFileSelect" />
         </div>
@@ -39,8 +42,8 @@
           </template>
         </el-tree>
 
-        <!-- 右键菜单 -->
-        <div v-if="ctxMenu.visible" class="ctx-menu" :style="{ left: ctxMenu.x + 'px', top: ctxMenu.y + 'px' }">
+        <!-- 右键菜单(仅登录用户) -->
+        <div v-if="ctxMenu.visible && isLogin" class="ctx-menu" :style="{ left: ctxMenu.x + 'px', top: ctxMenu.y + 'px' }">
           <div class="ctx-item" @click="ctxMkdir"><el-icon><FolderAdd /></el-icon>在此新建目录</div>
           <div class="ctx-item" @click="ctxUpload"><el-icon><Upload /></el-icon>上传文件</div>
           <div class="ctx-item" @click="ctxRename"><el-icon><Edit /></el-icon>重命名</div>
@@ -127,9 +130,14 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useStore } from 'vuex'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { FolderAdd, Upload, Edit, Delete, Download } from '@element-plus/icons-vue'
 import api from '../api'
+
+const store = useStore()
+// 是否已登录(未登录仅允许查看/下载)
+const isLogin = computed(() => store.state.login === 1)
 
 const treeData = ref([])
 const treeProps = { children: 'children', label: 'name' }
@@ -294,6 +302,7 @@ function uploadFile(file, path) {
 
 // ---- 右键菜单 ----
 function onContextMenu(event, data) {
+  if (!isLogin.value) return // 未登录不允许操作
   ctxMenu.visible = true
   ctxMenu.x = event.clientX
   ctxMenu.y = event.clientY
@@ -401,6 +410,7 @@ onMounted(() => {
 .tree-panel { width: 320px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.05); display: flex; flex-direction: column; overflow: hidden; position: relative; }
 .tree-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #f0f2f5; }
 .tree-title { font-weight: 600; font-size: 15px; color: #1f2d3d; }
+.login-tip { font-size: 12px; color: #a0a7b5; }
 .tree-actions { display: flex; gap: 6px; }
 .file-tree { flex: 1; overflow: auto; padding: 8px; }
 .tree-node { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; }
